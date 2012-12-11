@@ -193,7 +193,7 @@ getStructureMapping tt name groupedFields = Mapping name size (reverse cdesc) hs
 
 process :: String -> [Atom] -> IO ()
 process modName atoms = do
-	let (mapTypes, _) = foldl transform ([], initTable) atoms
+	let (mapTypes, _) = foldl transform ([], initDictionary) atoms
 	let decls = concatMap generateDecl mapTypes
 
 	let module_ = foldl (flip addDecl) (mkModule modName) $ reverse decls
@@ -205,11 +205,12 @@ process modName atoms = do
 		, "Data.Bits"
 		]
 	where
+		transform (prevTypes, tt) (Table {}) = (prevTypes, tt)
 		transform (prevMappings, tt) (Struct name fields) =
 			let groupedFields = getStructureGrouped name fields in
 			let mapping = getStructureMapping tt name groupedFields in
 			let newDef = (name, structSize mapping) in
-			(mapping : prevMappings, appendTable newDef tt)
+			(mapping : prevMappings, appendDictionary newDef tt)
 		transform (prevTypes, tt) (Enum _ _) = (prevTypes, tt)
 
 data Args = Args

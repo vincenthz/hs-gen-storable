@@ -20,7 +20,10 @@ module Combinators
 	, mkQuotedVarOpSymbol
 	, mkTestBit
 	, mkLet
+	, mkFunBindWithBinds
 	, mkPatBind
+	, mkPatBindBang
+	, mkPatBindWithBDecls
 	, peekPtrPlus
 	, peekPtrPlusSig
 	, module Language.Haskell.Exts.Syntax
@@ -89,7 +92,12 @@ mkTestBit name n = InfixApp (mkIdent name)
                             (mkLiteralInt n)
 
 mkLet defs = LetStmt (BDecls defs)
+
+mkFunBindWithBinds name pats ty rhs binds = FunBind [ Match dummyLoc (Ident name) pats ty (UnGuardedRhs rhs) (BDecls binds) ]
+
 mkPatBind bn an = PatBind dummyLoc (PVar $ Ident bn) Nothing (UnGuardedRhs an) (BDecls [])
+mkPatBindBang bn an = PatBind dummyLoc (PBangPat $ PVar $ Ident bn) Nothing (UnGuardedRhs an) (BDecls [])
+mkPatBindWithBDecls bn body bdecls = PatBind dummyLoc (PVar $ Ident bn) Nothing (UnGuardedRhs body) (BDecls bdecls)
 
 -- | create an expression "peek (ptr `plusPtr` rhs)"
 peekPtrPlus rhs = App (mkIdent "peek")

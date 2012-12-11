@@ -28,6 +28,17 @@ Executable           hs-gen-storable
                    , parsec
                    , haskell-src-exts
 
+Executable           hs-gen-table
+  Main-Is:           GenTable.hs
+  ghc-options:       -Wall -fno-warn-missing-signatures
+  Hs-Source-Dirs:    src
+  Build-depends:     base >= 4 && < 5
+                   , mtl
+                   , containers
+                   , bytestring
+                   , parsec
+                   , haskell-src-exts
+
 source-repository head
   type: git
   location: git://github.com/vincenthz/hs-gen-storable

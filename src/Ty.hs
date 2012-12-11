@@ -8,9 +8,9 @@ data Attrib =
 	| AttribSizeIsDefinedBy String
 	deriving (Show,Eq)
 
-data Table = Table [(TyName, Equation)]
+data Dictionary = Dictionary [(TyName, Equation)]
 
-initTable = Table
+initDictionary = Dictionary
 	[ ("Bool", EquationConst 1)
 	, ("Word8", EquationConst 1)
 	, ("Word16", EquationConst 2)
@@ -22,16 +22,16 @@ initTable = Table
 	, ("Int64", EquationConst 8)
 	]
 
-resolveSize :: Table -> TyName -> Integer
-resolveSize table@(Table l) n = case lookup n l of
+resolveSize :: Dictionary -> TyName -> Integer
+resolveSize table@(Dictionary l) n = case lookup n l of
 	Just e  -> eqResolve table e
 	Nothing -> error ("cannot find type: " ++ show n)
 
-getSize table@(Table l) n = case lookup n l of
+getSize table@(Dictionary l) n = case lookup n l of
 	Nothing -> error ("cannot find type: " ++ show n)
 	Just eq -> eqResolve table eq
 
-appendTable x (Table l) = Table (x:l)
+appendDictionary x (Dictionary l) = Dictionary (x:l)
 
 data Equation =
 	  EquationConst Integer
