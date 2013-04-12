@@ -1,4 +1,4 @@
-module DSL (readDSL, parseDSL, numberToInt, Atom(..), DSLType(..)) where
+module DSL (readDSL, parseDSL, numberToInt, Atom(..), TableElem(..), Number(..), DSLType(..)) where
 
 import Control.Applicative ((<*), (*>), (<$>))
 import Text.Parsec hiding (space)
@@ -12,9 +12,13 @@ data DSLType =
 
 data Atom =
       Struct String [(DSLType, String, Maybe Int, Maybe ArrayDef, [Annotation])]
-    | Table String String String [String]
+    | Table String [String] [TableElem]
     | Enum String [(String, Maybe Number)]
     deriving (Show,Eq)
+
+data TableElem = TableRow [TableElem]
+               | TableField String
+               deriving (Show,Eq)
 
 data Number = Hexadecimal Int
             | Octal       Int
@@ -91,23 +95,30 @@ parseDSL content = parse document "input" content where
         return $ Enum name fields
     enumField = do
         s  <- eatVoid0 *> symbol <* eatVoid0
-        eq <- option Nothing (char '=' >> eatVoid0 >> number >>= return . Just)
+        eq <- option Nothing ((char '=' *> eatVoid0 *> number <* eatVoid0) >>= return . Just)
         return (s,eq)
 
     tableDef = do
         string "table" >> eatVoid0
-        indexer <- string "::" *> eatVoid0 *> symbol <* eatVoid0
-        value   <- string "->" *> eatVoid0 *> symbol <* eatVoid0
+        string "::"
+        tys <- (eatVoid0 *> symbol <* eatVoid0) `sepBy` (string "->")
+        --value   <- eatVoid0 *> symbol <* eatVoid0
 
         _ <- char '{' >> eatVoid0
-        fields <- tableField `sepBy` char ','
+        fields <- (eatVoid0 *> tableElem <* eatVoid0) `sepBy` char ','
         _ <- char '}'
         name <- eatVoid0 *> symbol <* eatVoid0
         _ <- char ';'
         eatVoid0
-        return $ Table name indexer value fields
-    tableField =  do
-        s <- eatVoid0 *> symbol <* eatVoid0
-        return s
+        return $ Table name tys fields
+    tableElem = tableRow <|> tableField
+    tableRow  = do
+        _ <- char '{' >> eatVoid0
+        fields <- (eatVoid0 *> tableField <* eatVoid0) `sepBy` char ','
+        _ <- char '}' >> eatVoid0
+        return $ TableRow fields
+    tableField = do
+        s <- symbol
+        return $ TableField s
 
     symbol = many1 $ oneOf (['0'..'9'] ++ ['a'..'z'] ++ ['A'..'Z'] ++ ['_'])
